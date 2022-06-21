@@ -1,0 +1,6 @@
+.credentials
+.sid
+spool
+crt
+faxserver/tooling
+faxserver/bin/ippserver

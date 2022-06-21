@@ -1,0 +1,3 @@
+[submodule "ippsample"]
+	path = ippsample
+	url = https://github.com/istopwg/ippsample.git

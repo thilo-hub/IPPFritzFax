@@ -1,14 +1,9 @@
-# IPPFritzFax
-
-Airprint &amp;IPP faxserver using  Fritzbox FAX modem
+# Airprint / IPP faxserver for Fritzbox 
 
 
 Fritzbox is a fairly common kable/dsl modem in germany.
 
-It usually has the capability to send faxes (using T38 or some other protocol).
 Unfortunaty there is no free available software the enables printing faxes from apple devices on the fritzbox.
-The built-in web server only allows you to send single pages as a fax...
-All not very pleasant
 
 This package solfves this problem.
 

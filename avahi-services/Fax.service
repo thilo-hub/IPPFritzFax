@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">AirPrint FritzBox FAX @ %h</name>
+  <service>
+    <type>_ipp._tcp</type>
+    <subtype>_universal._sub._ipp._tcp</subtype>
+    <port>8632</port>
+    <host-name>Comp.nispuk.com</host-name>
+   <txt-record>TLS=1.3</txt-record>
+   <txt-record>UUID=84cf3cd1-0000-341c-6a4e-92d13edb77ff</txt-record>
+   <txt-record>pdl=image/urf,image/jpeg</txt-record>
+   <txt-record>URF=W8,CP255,FN3-11-60,IS9,IFU0,MT1-5,OB10,PQ3-4-5,RS203-300,V1.4</txt-record>
+   <txt-record>Fax=T</txt-record>
+   <txt-record>Scan=F</txt-record>
+   <txt-record>Sort=F</txt-record>
+   <txt-record>Bind=F</txt-record>
+   <txt-record>Punch=0</txt-record>
+   <txt-record>Collate=F</txt-record>
+   <txt-record>Copies=T</txt-record>
+   <txt-record>Staple=F</txt-record>
+   <txt-record>Duplex=T</txt-record>
+   <txt-record>Color=T</txt-record>
+   <txt-record>product=(ThiloPrint)</txt-record>
+   <txt-record>priority=0</txt-record>
+   <txt-record>note=FritzBox6591</txt-record>
+   <txt-record>kind=photo,envelope,document</txt-record>
+   <txt-record>adminurl=http://Comp.nispuk.com:8632/</txt-record>
+   <txt-record>ty=Simulated</txt-record>
+   <txt-record>rfo=ipp/faxout</txt-record>
+   <txt-record>rp=ipp/print/pdf</txt-record>
+   <txt-record>qtotal=1</txt-record>
+   <txt-record>txtvers=1</txt-record>
+  </service>
+</service-group>
