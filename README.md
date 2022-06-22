@@ -63,18 +63,19 @@ Which creates a shell script in `/tmp/run_env.$pid.sh` (and runs the FB command 
 This script can "re-run" the command with all parameters set the same way as the ippserver did.
 Very helpfull to debug/inspect why it might not work.
 
-###  Printer not istalling
+###  Printer not installing
 
-Mdns can be a beast
+Bonjour/Mdns can be a beast.
 
- check if your PC sees the printer info:
- MACOS:
+ Check if your PC sees the printer info:
+ 
+ - MACOS:
   `dns-sd -B _ipp | grep FritzBox`
 ```
    17:32:52.876  Add        2  14 local.               _ipp._tcp.           AirPrint FritzBox FAX @ Comp 
 ```
 
- linux/*bsd/Avahi: 
+- linux/*bsd/Avahi: 
  `avahi-browse -r _ipp._tcp -t | grep FritzBox`
 ```
    + epair0b IPv4 AirPrint FritzBox FAX @ Comp                  _ipp._tcp            local
