@@ -52,6 +52,17 @@ faxserver/bin/ippserver -C faxserver -K crt -d spool --no-dns-sd
 
 ## Troubleshooting:
 
+### Tracing execution
+The default command configured to be executed is "hell.sh" in
+faxout.conf
+```
+Command hell.sh
+#Command FritzBoxFax.sh
+```
+Which creates a shell script in `/tmp/run_env.$pid.sh` (and runs the FB command as a proxy).
+This script can "re-run" the command with all parameters set the same way as the ippserver did.
+Very helpfull to debug/inspect why it might not work.
+
 ###  Printer not istalling
 
 Mdns can be a beast
