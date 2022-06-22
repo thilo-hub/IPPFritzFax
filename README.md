@@ -10,7 +10,7 @@ Unfortunaty there is no free available software the enables printing faxes from 
 The built-in web server only allows you to send single pages as a fax...
 All not very pleasant
 
-This package solfves this problem.
+This package solves this problem.
 It creates an IPP printer device which has a "sub-device" as the fax modem. It will show on the network as a FritBox Fax printer.
 
 
