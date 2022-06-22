@@ -1,4 +1,4 @@
-# IPPFritzFax
+# Airprint / IPP faxserver for Fritzbox 
 
 Airprint &amp;IPP faxserver using  Fritzbox FAX modem
 
@@ -76,12 +76,23 @@ Mdns can be a beast
 
 During setup on MacOS, it might happen that the fax-device does not show as a second printer.  This is usually a mdns problem....
 
+### Test FAX reciver
+
+There is a free receiver (at least in Germany)
+https://simple-fax.de/test-fax-empfangen
+that can be used to receive single pages
+
+0531 - 49059113
+
+./send_fax.pl 000000000  053149059113  ./ippsample/libcups/examples/onepage-letter.pdf
+`./send_fax.pl 000000000  053149059113  ./ippsample/libcups/examples/onepage-letter.pdf`
+
 ###   Fax not sending
 
 
 To test the "fax-ing" from commandline, try:
 
-`~/Printing/IPPFritzFax]# ./send_fax.pl 012345674 012345670 some-small-pdfile.pdf`  
+`./send_fax.pl 012345674 012345670 some-small-pdfile.pdf`  
 ```
 url=https://192.168.66.1
 sid=21fcd4e49c530cad
