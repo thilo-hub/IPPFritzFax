@@ -21,15 +21,14 @@ It creates an IPP printer device which has a "sub-device" as the fax modem. It w
 
 ## Installation prerequisites:
 
-A pc having avahi (probable any other dns-sd capable machine will do - not tested)
+- A pc having avahi (probable any other dns-sd capable machine will do - not tested)
 
-Configure the avahi service usinging the provided service script as a template
+- Configure the avahi service usinging the provided service script as a template ( avahi-services/Fax.service  )
 
-sh make_all.sh
+- Check the configuration ( faxserver/system.conf faxserver/print/faxout.conf faxserver/print/pdf.conf )
+- sh make_all.sh
 
-Create the credentials file having the relevant information for the fritzbox available:
-
-
+- Create the credentials file having the relevant information for the fritzbox available:
 ** $HOME/.credentials  **
 ```
 url=https://......
@@ -39,11 +38,14 @@ telFrom=.......
 ```
 
 
-Create spool and certificate directories and run:
+- Create spool and certificate directories 
+ 
+- run:
 
+```
 mkdir spool crt 
 faxserver/bin/ippserver -C faxserver -K crt -d spool --no-dns-sd 
-
+```
 
 ==== Thats it ====
 
