@@ -22,15 +22,19 @@ $ENV{PERL_LWP_SSL_VERIFY_HOSTNAME}=0;
 if ($ENV{IPP_JOB_ID}) {
 	die "Missing destination telephone in environment" 
 
-	unless  ($ENV{IPP_DESTINATION_URIS} =~ /destination-uri=tel:(\d+)/) ;
+#export IPP_DESTINATION_URIS='{destination-uri=tel:0531-49059113 pre-dial-string=+49531}'
+	unless  ($ENV{IPP_DESTINATION_URIS} =~ /destination-uri=tel:(\S+)(?:\s+pre-dial-string=(\S+))?\s*}/);
+	my $tel=$2.$1;
+	$tel =~ s/[- ]//g;
 	# We are an IPP client do what it takes
 	die "Credentials must provide source tel number" unless $cred->{telFrom};
 	# Fix arguments 
-	unshift @ARGV,$cred->{telFrom},$1;
+	unshift @ARGV,$cred->{telFrom},$tel;
 	# Flag different op mode
 	$p->{ipp}=1;
 }
 
+exit if defined $ENV{DONTSEND};
   
 
 $p->{NumSrc} = shift @ARGV;
