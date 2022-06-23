@@ -1,6 +1,9 @@
 
 ROOT_DIR!=pwd
 
+CONFIG_FLAGS= --with-libcups=$(ROOT_DIR)/ippsample/libcups   \
+		CFLAGS="-I$(ROOT_DIR)/patch -I/usr/local/include" LDFLAGS="-L/usr/local/lib -lgnutls -lpthread" 
+
 all: checkout patch configure
 	cd ippsample && make
 	cp ippsample/server/ippserver faxserver/bin/.
@@ -30,8 +33,7 @@ ippsample/.patched:
 
 ippsample/.configured:
 	cd ippsample && \
-	./configure --with-libcups=$(ROOT_DIR)/ippsample/libcups   \
-		CFLAGS="-I$(ROOT_DIR)/patch -I/usr/local/include" LDFLAGS="-L/usr/local/lib -lgnutls -lpthread" 
+	./configure $(CONFIG_FLAGS)
 	touch $@
 
 
