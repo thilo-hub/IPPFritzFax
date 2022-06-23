@@ -148,8 +148,14 @@ During experimentation, the modem had to power-cycled because it went into a sta
 
 
 ## Dockerization
-  ... TODO ....
+  Docker build works - IPP server connecte (port numbers currently hardcoded)
+  -- Avahi server installed but untested 
 
+  Build: `docker build  -t fritz .`
+  
+  Run: `docker run -ti    -p 8632:8632   --name fax --rm  -d fritz   -url=https://fritz.box  -tel=012345 -user=UUUUU  -pass=XXXXX`
+
+I can currently only test using externzl avahi pointing to my server (macos docker host interface not available)
 
 ## really nice support of all possible iPP features
   ... TODO ...

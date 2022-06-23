@@ -5,7 +5,7 @@ use File::Slurp;
 use IPC::Open2;
 use File::Basename;
 
-use lib dirname($0)."/lib";
+use lib dirname($0)."/../lib";
 use Imageconv;
 use FritzBox;
 

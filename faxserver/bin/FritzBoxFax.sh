@@ -1,3 +1,3 @@
 #!/bin/sh
 
-exec ./send_fax.pl
+exec perl bin/send_fax.pl "$@"

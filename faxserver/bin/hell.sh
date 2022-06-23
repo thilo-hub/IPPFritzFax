@@ -1,6 +1,6 @@
 #!/bin/sh
 
-TOOL="./send_fax.pl"
+TOOL="FritzBoxFax.sh"
 # TOOL="./try_slow.sh"
 # TOOL="./try_slow1.sh"
 export TOOL
