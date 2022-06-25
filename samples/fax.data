@@ -5,11 +5,11 @@ Content-Disposition: form-data; name="sid"
 ------WebKitFormBoundaryGCgPBLTr5oy20S3B
 Content-Disposition: form-data; name="NumDest"
 
-064079149774
+0123456789
 ------WebKitFormBoundaryGCgPBLTr5oy20S3B
 Content-Disposition: form-data; name="NumSrc"
 
-064079149770
+0123456789
 ------WebKitFormBoundaryGCgPBLTr5oy20S3B
 Content-Disposition: form-data; name="FaxUploadFile"
 
