@@ -65,13 +65,17 @@ $content = encode_base64($content);
 print "Sending ".scalar(@pages)." pages to $p->{NumDst}\n";
 $fb->send_fax($p->{NumSrc},$p->{NumDst},$content);
 $status = $fb->wait_faxready( sub {
+	# state == 4  (CONNECTED)  progress indicates transmission
+	# state == 5  (REPORT)     fax sent report being done..
 
 	my $s = shift;
 	my $npages=scalar(@pages);
+	# Only in state 5 we are returning all completed
 	my $cur_page = $npages * $s->{progress} / 100;
+	$cur_page++  if $s->{status} == 5;
 
 
-	printf STDERR  "ATTR: job-impressions=%d job-impressions-completed=%d\n", $cur_page,$cur_page;
+	printf STDERR  "ATTR: job-impressions=%d job-impressions-completed=%d\n", $npages+1,$cur_page;
 }
 );
 

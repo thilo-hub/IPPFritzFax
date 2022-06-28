@@ -1,0 +1,97 @@
+From 64a5b645d49791161c1c1f0f4ae98963ed8435e5 Mon Sep 17 00:00:00 2001
+From: thilo jeremias <thilo@nispuk.com>
+Date: Wed, 29 Jun 2022 00:05:02 +0200
+Subject: [PATCH 4/5] Allow some faxout specials
+
+enable dns-name for configuration
+add some faxout specifics
+---
+ server/conf.c    |  2 +-
+ server/printer.c | 34 ++++++++++++++++++++++------------
+ 2 files changed, 23 insertions(+), 13 deletions(-)
+
+diff --git a/server/conf.c b/server/conf.c
+index 1cb7818..cd92578 100644
+--- a/server/conf.c
++++ b/server/conf.c
+@@ -1206,7 +1206,7 @@ attr_cb(ipp_file_t     *f,		/* I - IPP file */
+     "printer-config-change-time",
+     "printer-current-time",
+     "printer-detailed-status-messages",
+-    "printer-dns-sd-name",
++    //"printer-dns-sd-name",
+     //"printer-fax-log-uri",
+     "printer-get-attributes-supported",
+     "printer-icons",
+diff --git a/server/printer.c b/server/printer.c
+index c9ce159..27cbf03 100644
+--- a/server/printer.c
++++ b/server/printer.c
+@@ -786,6 +786,11 @@ serverCreatePrinter(
+     "top"
+   };
+ 
++ { ipp_attribute_t *dns_sd_name = ippFindAttribute(pinfo->attrs, "printer-dns-sd-name", IPP_TAG_NAME);
++   const char *value;
++  if ((value = ippGetString(dns_sd_name, 0, NULL)) != NULL)
++	   name = strdup(value);
++ }
+ 
+   serverLog(SERVER_LOGLEVEL_DEBUG, "serverCreatePrinter(resource=\"%s\", name=\"%s\", pinfo=%p)", resource, name, (void *)pinfo);
+ 
+@@ -2197,8 +2202,7 @@ serverRegisterPrinter(
+   printer_uuid              = ippFindAttribute(printer->pinfo.attrs, "printer-uuid", IPP_TAG_URI);
+   sides_supported           = ippFindAttribute(printer->pinfo.attrs, "sides-supported", IPP_TAG_KEYWORD);
+   urf_supported             = ippFindAttribute(printer->pinfo.attrs, "urf-supported", IPP_TAG_KEYWORD);
+-  faxout_supported          = ippFindAttribute(printer->pinfo.attrs, "faxout-supported", IPP_TAG_KEYWORD);
+-fprintf(stderr,"THILO:  faxout: %x\n",faxout_supported);
++  faxout_supported          = ippFindAttribute(printer->pinfo.attrs, "faxout-supported", IPP_TAG_BOOLEAN);
+ 
+   for (i = 0, count = ippGetCount(document_format_supported), ptr = formats; i < count; i ++)
+   {
+@@ -2256,15 +2260,15 @@ fprintf(stderr,"THILO:  faxout: %x\n",faxout_supported);
+ //+  "UUID=81d88363-332b-308f-749e-bfae8eb643ac"
+ //+  "URF=W8,SRGB24,ADOBERGB24-48,DM3,CP255,OFU0,IS1-4-5-7,IFU0,MT1-2-3-7-8-9-10-11-12,OB9,PQ3-4-5,RS300-600,V1.4"
+ //-  "pdl=image/urf,i//mage/jpeg"
+-//-  "rfo=ipp/faxout"
+-//-  "Fax=T"
+-//-  "Scan=F"
+-//-  "Sort=F"
+-//-  "Bind=F"
+-//-  "Punch=0"
+-//-  "Collate=F"
+-//-  "Copies=T"
+-//-  "Staple=F"
++//+  "rfo=ipp/faxout"
++//+  "Fax=T"
++//+  "Scan=F"
++//+  "Sort=F"
++//+  "Bind=F"
++//+  "Punch=0"
++//+  "Collate=F"
++//+  "Copies=T"
++//+  "Staple=F"
+ //+  "Duplex=T"
+ //+  "Color=T"
+ //-  "product=(Simulated 2-Sided InkJet)"
+@@ -2301,10 +2305,16 @@ fprintf(stderr,"THILO:  faxout: %x\n",faxout_supported);
+     TXTRecordSetValue(&ipp_txt, "Bind", 1, false ? "T" : "F");
+     TXTRecordSetValue(&ipp_txt, "Punch", 1, "0");
+     TXTRecordSetValue(&ipp_txt, "Collate", 1, false ? "T" : "F");
+-    TXTRecordSetValue(&ipp_txt, "Copies", 1, false ? "T" : "F");
++    TXTRecordSetValue(&ipp_txt, "Copies", 1, true ? "T" : "F");
+     TXTRecordSetValue(&ipp_txt, "Staple", 1, false ? "T" : "F");
+   }
+ 
++  { char *product="(My Printer)";
++  TXTRecordSetValue(&ipp_txt, "product", (uint8_t)strlen(product), product);
++  }
++  if (ippGetBoolean(faxout_supported, 0)) 
++	  TXTRecordSetValue(&ipp_txt, "rfo", (uint8_t)strlen(printer->resource) - 1, printer->resource + 1);
++
+   if (!is_print3d && Encryption != HTTP_ENCRYPTION_NEVER)
+     TXTRecordSetValue(&ipp_txt, "TLS", 3, "1.2");
+   if (urf[0])
+-- 
+2.32.1 (Apple Git-133)
+

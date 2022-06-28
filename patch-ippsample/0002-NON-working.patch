@@ -1,0 +1,291 @@
+From 63527d4b59298a476f5aa9f39e285019ca350e0b Mon Sep 17 00:00:00 2001
+From: Thilo Jeremias <thilo@nispuk.com>
+Date: Tue, 28 Jun 2022 02:12:32 +0200
+Subject: [PATCH 2/5] NON working...
+
+---
+ .gitmodules        |  4 +-
+ server/conf.c      | 86 +++++++++++++++++++++++++++++++++++++++---
+ server/printer.c   | 93 +++++++++++++++++++++++++++++++++++++++-------
+ server/transform.c |  8 +++-
+ 4 files changed, 168 insertions(+), 23 deletions(-)
+
+diff --git a/.gitmodules b/.gitmodules
+index a30047a..9fe452d 100644
+--- a/.gitmodules
++++ b/.gitmodules
+@@ -1,6 +1,6 @@
+ [submodule "libcups"]
+ 	path = libcups
+-	url = git@github.com:michaelrsweet/libcups.git
++	url = https://github.com/michaelrsweet/libcups.git
+ [submodule "pdfio"]
+ 	path = pdfio
+-	url = git@github.com:michaelrsweet/pdfio.git
++	url = https://github.com/michaelrsweet/pdfio.git
+diff --git a/server/conf.c b/server/conf.c
+index 3eae741..78122a0 100644
+--- a/server/conf.c
++++ b/server/conf.c
+@@ -225,11 +225,87 @@ serverCreateSystem(
+ 
+         if (serverLoadAttributes(filename, &pinfo))
+ 	{
+-          //snprintf(resource, sizeof(resource), "/ipp/print/%s", dent->filename);
+-	  if (!strcmp(dent->filename,"faxout"))
+-		  snprintf(resource, sizeof(resource), "/ipp/%s", dent->filename);
+-	  else
+-		  snprintf(resource, sizeof(resource), "/ipp/print/%s", dent->filename);
++	  snprintf(resource, sizeof(resource), "/ipp/print/%s", dent->filename);
++
++	  if ((printer = serverCreatePrinter(resource, dent->filename, dent->filename, &pinfo, 0)) == NULL)
++            continue;
++
++          printer->state         = pinfo.initial_state;
++          printer->state_reasons = pinfo.initial_reasons;
++          printer->is_accepting  = pinfo.initial_accepting;
++
++          serverAddPrinter(printer);
++	}
++      }
++      else if (strcmp(ptr, ".png") && strcmp(ptr, ".strings"))
++        serverLog(SERVER_LOGLEVEL_INFO, "Skipping \"%s\".", dent->filename);
++    }
++
++    cupsDirClose(dir);
++  }
++ /*
++  * Then see if there are any faxout queues...
++  */
++
++  if (StateDirectory)
++  {
++   /*
++    * See if we have saved printer state information...
++    */
++
++    snprintf(confdir, sizeof(confdir), "%s/faxout", StateDirectory);
++
++    if (access(confdir, 0))
++      snprintf(confdir, sizeof(confdir), "%s/faxout", directory);
++  }
++  else
++    snprintf(confdir, sizeof(confdir), "%s/faxout", directory);
++
++  if ((dir = cupsDirOpen(confdir)) != NULL)
++  {
++    serverLog(SERVER_LOGLEVEL_INFO, "Loading printers from \"%s\".", filename);
++
++    while ((dent = cupsDirRead(dir)) != NULL)
++    {
++      if ((ptr = strrchr(dent->filename, '.')) == NULL)
++        ptr = "";
++
++      if (!strcmp(ptr, ".conf"))
++      {
++       /*
++        * Load the conf file, with any associated icon image.
++        */
++
++        serverLog(SERVER_LOGLEVEL_INFO, "Loading printer from \"%s\".", dent->filename);
++
++        snprintf(filename, sizeof(filename), "%s/%s", confdir, dent->filename);
++        *ptr = '\0';
++
++        memset(&pinfo, 0, sizeof(pinfo));
++
++        pinfo.print_group       = SERVER_GROUP_NONE;
++	pinfo.proxy_group       = SERVER_GROUP_NONE;
++	pinfo.initial_accepting = 1;
++	pinfo.initial_state     = IPP_PSTATE_IDLE;
++	pinfo.initial_reasons   = SERVER_PREASON_NONE;
++        pinfo.web_forms         = 1;
++
++        snprintf(iconname, sizeof(iconname), "%s/%s.png", confdir, dent->filename);
++        if (!access(iconname, R_OK))
++        {
++          pinfo.icon = strdup(iconname);
++	}
++	else if (StateDirectory)
++	{
++	  snprintf(iconname, sizeof(iconname), "%s/faxout/%s.png", directory, dent->filename);
++	  if (!access(iconname, R_OK))
++	    pinfo.icon = strdup(iconname);
++	}
++
++        if (serverLoadAttributes(filename, &pinfo))
++	{
++	  // not sure if other faxes can be installed, for the moment only /faxout exists 
++	  snprintf(resource, sizeof(resource), "/ipp/faxout");
+ 
+ 	  if ((printer = serverCreatePrinter(resource, dent->filename, dent->filename, &pinfo, 0)) == NULL)
+             continue;
+diff --git a/server/printer.c b/server/printer.c
+index 20caaf4..78d3da0 100644
+--- a/server/printer.c
++++ b/server/printer.c
+@@ -1524,7 +1524,9 @@ serverCreatePrinter(
+ 
+   /* printer-geo-location */
+   if (!cupsArrayFind(existing, (void *)"printer-geo-location"))
++  { fprintf(stderr,"Added geo loc\n");
+     ippAddOutOfBand(printer->pinfo.attrs, IPP_TAG_PRINTER, IPP_TAG_UNKNOWN, "printer-geo-location");
++    }
+ 
+   /* printer-icc-profiles */
+   if (!cupsArrayFind(existing, (void *)"printer-icc-profiles") && printer->pinfo.profiles)
+@@ -2248,6 +2250,7 @@ serverRegisterPrinter(
+   * Build the TXT record for IPP...
+   */
+ 
++#Error
+   TXTRecordCreate(&ipp_txt, 1024, NULL);
+   TXTRecordSetValue(&ipp_txt, "rp", (uint8_t)strlen(printer->resource) - 1, printer->resource + 1);
+   if ((value = ippGetString(printer_make_and_model, 0, NULL)) != NULL)
+@@ -2358,30 +2361,92 @@ serverRegisterPrinter(
+   */
+ 
+   ipp_txt = NULL;
+-  ipp_txt = avahi_string_list_add_printf(ipp_txt, "rp=%s", printer->resource + 1);
+-  if ((value = ippGetString(printer_make_and_model, 0, NULL)) != NULL)
+-    ipp_txt = avahi_string_list_add_printf(ipp_txt, "ty=%s", value);
+-  if ((value = ippGetString(printer_more_info, 0, NULL)) != NULL)
+-    ipp_txt = avahi_string_list_add_printf(ipp_txt, "adminurl=%s", value);
+-  if ((value = ippGetString(printer_location, 0, NULL)) != NULL)
+-    ipp_txt = avahi_string_list_add_printf(ipp_txt, "note=%s", value);
+-  ipp_txt = avahi_string_list_add_printf(ipp_txt, "pdl=%s", formats);
++fprintf(stderr,"R: %s\n",printer->resource+1);
++//# "TLS=1.2"
++//#  "UUID=81d88363-332b-308f-749e-bfae8eb643ac"
++//#  "URF=W8,SRGB24,ADOBERGB24-48,DM3,CP255,OFU0,IS1-4-5-7,IFU0,MT1-2-3-7-8-9-10-11-12,OB9,PQ3-4-5,RS300-600,V1.4"
++//#  "pdl=image/urf,i//mage/jpeg"
++//#  "rfo=ipp/faxout"
++//#  "Fax=T"
++//#  "Scan=F"
++//#  "Sort=F"
++//#  "Bind=F"
++//#  "Punch=0"
++//#  "Collate=F"
++//#  "Copies=T"
++//#  "Staple=F"
++//#  "Duplex=T"
++//#  "Color=T"
++//#  "product=(Simulated 2-Sided InkJet)"
++//#  "priority=0"
++//#  "PaperMax=<legal-A4"
++//#  "note=ThilosMacBookM1 (6)"
++//#  "kind=photo,envelope,document"
++//#  "adminurl=http://thilosmcbookm13.nispuk.com:8632/"
++//#  "ty=Simulated 2-Sided InkJet"
++//#  "rp=ipp/print/inkjet2"
++//#  "qtotal=1"
++//#  "txtvers=1"]
++
++  if (!is_print3d && Encryption != HTTP_ENCRYPTION_NEVER)
++    ipp_txt = avahi_string_list_add_printf(ipp_txt, "TLS=1.2");
++
+   if ((value = ippGetString(printer_uuid, 0, NULL)) != NULL)
+     ipp_txt = avahi_string_list_add_printf(ipp_txt, "UUID=%s", value + 9);
+ 
++  if (urf[0])
++    ipp_txt = avahi_string_list_add_printf(ipp_txt, "URF=%s", urf);
++
++  ipp_txt = avahi_string_list_add_printf(ipp_txt, "pdl=%s", formats);
+   if (!is_print3d)
+   {
+-    ipp_txt = avahi_string_list_add_printf(ipp_txt, "Color=%s", ippGetBoolean(color_supported, 0) ? "T" : "F");
+-    ipp_txt = avahi_string_list_add_printf(ipp_txt, "Duplex=%s", ippGetCount(sides_supported) > 1 ? "T" : "F");
++
++	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "rfo=%s", "/ipp/faxout");
++
++	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Fax=%s", true ? "T" : "FT");
++
++	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Scan=%s", false ? "T" : "FT");
++
++	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Sort=%s", false ? "T" : "FT");
++
++	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Bind=%s", false ? "T" : "FT");
++
++	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Punch=%d", 0);
++
++	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Collate=%s", false ? "T" : "FT");
++
++	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Copies=%s", false ? "T" : "FT");
++
++	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Staple=%s", false ? "T" : "FT");
++
++	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Duplex=%s", ippGetCount(sides_supported) > 1 ? "T" : "F");
++
++	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Color=%s", ippGetBoolean(color_supported, 0) ? "T" : "F");
+   }
+ 
+-  if (!is_print3d && Encryption != HTTP_ENCRYPTION_NEVER)
+-    ipp_txt = avahi_string_list_add_printf(ipp_txt, "TLS=1.2");
+-  if (urf[0])
+-    ipp_txt = avahi_string_list_add_printf(ipp_txt, "URF=%s", urf);
++  ipp_txt = avahi_string_list_add_printf(ipp_txt, "product=(ThiloPrint))");
++
++  ipp_txt = avahi_string_list_add_printf(ipp_txt, "priority=%d", 0);
++
++  ipp_txt = avahi_string_list_add_printf(ipp_txt, "PaperMax=%s","<legal-A4");
++
++  if ((value = ippGetString(printer_location, 0, NULL)) != NULL)
++    ipp_txt = avahi_string_list_add_printf(ipp_txt, "note=%s", value);
++
++  ipp_txt = avahi_string_list_add_printf(ipp_txt, "kind=%s","document");
++
++  if ((value = ippGetString(printer_more_info, 0, NULL)) != NULL)
++    ipp_txt = avahi_string_list_add_printf(ipp_txt, "adminurl=%s", value);
++
++  if ((value = ippGetString(printer_make_and_model, 0, NULL)) != NULL)
++    ipp_txt = avahi_string_list_add_printf(ipp_txt, "ty=%s", value);
++
++  ipp_txt = avahi_string_list_add_printf(ipp_txt, "rp=%s", printer->resource + 1);
++
+   ipp_txt = avahi_string_list_add_printf(ipp_txt, "txtvers=1");
+   ipp_txt = avahi_string_list_add_printf(ipp_txt, "qtotal=1");
+ 
++
+  /*
+   * Register _printer._tcp (LPD) with port 0 to reserve the service name...
+   */
+diff --git a/server/transform.c b/server/transform.c
+index db7aec0..04dd112 100644
+--- a/server/transform.c
++++ b/server/transform.c
+@@ -567,10 +567,10 @@ process_attr_message(
+  /*
+   * Loop through the options and record them in the printer or job objects...
+   */
+-
+   for (i = num_options, option = options; i > 0; i --, option ++)
+   {
+     serverLogJob(SERVER_LOGLEVEL_DEBUG, job, "options[%u].name=\"%s\", .value=\"%s\"", (unsigned)(num_options - i), option->name, option->value);
++  fprintf(stderr,"THILO: " __FILE__ ":%d  Got:%s\n",__LINE__,option->name);
+ 
+     if (!strcmp(option->name, "job-impressions"))
+     {
+@@ -688,6 +688,7 @@ process_state_message(
+   * Keywords may or may not have a suffix (-report, -warning, -error) per
+   * RFC 8011.
+   */
++  fprintf(stderr,"THILO: " __FILE__ ":%d  Got:%s\n",__LINE__,message);
+ 
+   if (*message == '-')
+   {
+@@ -726,8 +727,11 @@ process_state_message(
+       }
+     }
+ 
+-    if ((ptr = strstr(message, "-error")) != NULL)
++    if ((ptr = strstr(message, "-error")) != NULL){
+       *ptr = '\0';
++  fprintf(stderr,"THILO: " __FILE__ ":%d  ABORT\n",__LINE__);
++  	job->state = IPP_JSTATE_ABORTED;
++      }
+     else if ((ptr = strstr(message, "-report")) != NULL)
+       *ptr = '\0';
+     else if ((ptr = strstr(message, "-warning")) != NULL)
+-- 
+2.32.1 (Apple Git-133)
+

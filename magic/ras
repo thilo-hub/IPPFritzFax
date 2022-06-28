@@ -1,0 +1,71 @@
+
+#------------------------------------------------------------------------------
+# $File: pdf,v 1.16 2021/07/30 11:47:07 christos Exp $
+# pdf:  file(1) magic for Portable Document Format
+#
+
+0	name	pdf
+>8	search		/Count
+>>&0	regex		[0-9]+		\b, %s pages
+>8	search/512	/Filter/FlateDecode/	(zip deflate encoded)
+
+0	string		UNIRAST\0		Universal Raster File  document
+>8      belong		x                \b, %d pages
+>12     byte		x		 \b, %dbpp
+>13     byte		x		 \b, %d color space
+>14     byte		x		 \b, %d duplex
+>15     byte		x		 \b, %d quality
+>0x18     belong		x		 \b, %d page width
+>0x1c     belong		x		 \b, %d page height
+>0x20     belong		x		 \b, %d dpi
+#18                      = 24bpp
+#01                      = color space 1 (values 1-6 mean different things)
+#00                      = duplex mode (no)
+#04                      = quality 4
+#0000 0001               = unknown
+#0000 0000               = unknown
+#16 0000 13ec               = 5100 = page width
+#20 0000 19c8               = 6600 = page height
+#24 0000 0258               = 600 = dots per inch
+#0000 0000                               = unknown
+#0000 0000                               = unknown
+#
+##T !:mime	application/pdf
+##T !:strength +60
+##T !:ext	pdf
+##T >5	byte		x		\b, version %c
+##T >7	byte		x		\b.%c
+##T >0	use		pdf
+##T 
+##T 0	string		\012%PDF-	PDF document
+##T !:mime	application/pdf
+##T !:strength +60
+##T !:ext	pdf
+##T >6	byte		x		\b, version %c
+##T >8	byte		x		\b.%c
+##T >0	use		pdf
+##T 
+##T 0	string		\xef\xbb\xbf%PDF-	PDF document (UTF-8)
+##T !:mime	application/pdf
+##T !:strength +60
+##T !:ext	pdf
+##T >6	byte		x		\b, version %c
+##T >8	byte		x		\b.%c
+##T >0	use		pdf
+##T 
+##T # From: Nick Schmalenberger <nick@schmalenberger.us>
+##T # Forms Data Format
+##T 0       string          %FDF-           FDF document
+##T !:mime application/vnd.fdf
+##T !:strength +60
+##T !:ext	pdf
+##T >5      byte            x               \b, version %c
+##T >7      byte            x               \b.%c
+##T 
+##T 0	search/256	%PDF-		PDF document
+##T !:mime	application/pdf
+##T !:strength +60
+##T !:ext	pdf
+##T >&0	byte		x		\b, version %c
+##T >&2	byte		x		\b.%c
+##T >0	use		pdf

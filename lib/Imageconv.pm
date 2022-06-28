@@ -9,6 +9,7 @@ sub any2g3
 	my $content = shift;
 	my $hdr = unpack("A4",$$content);
 
+	return  urf2g3($content)      if unpack("A7",$$content)  eq "UNIRAST";
 	return  pdf2g3($content)      if $hdr eq "%PDF";
 	return  png2g3($content)      if $hdr eq "\x89PNG";
 
@@ -17,6 +18,22 @@ sub any2g3
 
 # pdf -> g3
 #
+sub urf2g3
+{
+	my $content = shift;
+	# convert the pdf to sff 
+	#
+	# ./pdftosff.sh "$IN" "$SFF".bin ;
+	my $dir = tempdir( CLEANUP => 1 );
+	open(PDF,"|-",qw{urftopgm -},$dir."/pages-%04d.pgm");
+	print PDF $$content;
+	close(PDF);
+	my @pages=glob("$dir/pages*");
+	foreach(@pages) {
+		$_ = pgm2g3($_);
+	}
+	return @pages;
+}
 sub pdf2g3
 {
 	my $content = shift;
@@ -36,6 +53,26 @@ sub pdf2g3
 
 # png -> g3
 #
+
+sub pgm2g3 
+{
+	my $file=shift;
+	my $chld_out;
+
+	if (ref($file) eq "SCALAR" ){
+		open2($chld_out,my $chld_in,"pamditherbw | pamtopnm | pbmtog3 -align8 -reversebits");
+		print $chld_in $$file;
+		close($chld_in);
+	} else {
+		open($chld_out, '-|' ,"pamditherbw '$file' | pamtopnm | pbmtog3 -align8 -reversebits");
+		# open($chld_out, '-|' ,"pngtopam '$file' | pbmtog3 -align8 -reversebits");
+	}
+	local $/;
+	my $g3=<$chld_out>;
+	close $chld_out;
+	waitpid( 0,0);
+	return $g3;
+}
 
 sub png2g3 
 {

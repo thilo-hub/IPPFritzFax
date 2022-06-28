@@ -72,11 +72,12 @@ if ($ARGV[0] eq "avahi-service" ) {
 } elsif ($ARGV[0] eq "print") {
 	print "'".join("' '",@ARGS)."'\n";
 } elsif ($ARGV[0] eq "avahi-publish") {
+	print STDERR join(" ",("avahi-publish",@AV_ARGS));
 	system("avahi-publish",@AV_ARGS);
 } elsif ($ARGV[0] eq "dns-sd") {
 	system("dns-sd",@ARGS);
 } else {
- print STDERR "Usage:  $0  avahi-service [file] | print | dns-sd\n";
+ print STDERR "Usage:  $0  avahi-service [file] | print | avahi-publish | dns-sd\n";
  exit 1;
 }
 

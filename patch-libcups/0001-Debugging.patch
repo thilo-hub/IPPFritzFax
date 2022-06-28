@@ -1,0 +1,186 @@
+From 2d66a61e06422a68c4bdc999dcc434690f908bea Mon Sep 17 00:00:00 2001
+From: thilo jeremias <thilo@nispuk.com>
+Date: Tue, 28 Jun 2022 16:09:07 +0200
+Subject: [PATCH] Debugging
+
+---
+ cups/ipp-file.c                         |  1 +
+ tools/ippeveprinter.c                   | 49 +++++++++++++++++++------
+ tools/test.conf                         |  9 ++++-
+ xcode/config.h                          |  4 +-
+ xcode/libcups.xcodeproj/project.pbxproj |  4 +-
+ 5 files changed, 49 insertions(+), 18 deletions(-)
+
+diff --git a/cups/ipp-file.c b/cups/ipp-file.c
+index d0ac65b7d..79a797abb 100644
+--- a/cups/ipp-file.c
++++ b/cups/ipp-file.c
+@@ -429,6 +429,7 @@ ippFileRead(ipp_file_t      *file,	// I - IPP data file
+         {
+ 	  ippFileExpandVars(file, value, temp, sizeof(value));
+ 	  ippFileSetVar(file, name, value);
++  fprintf(stderr,__FILE__ ":%d  T:(%s) %s\n",__LINE__,name,value);
+ 	}
+       }
+       else
+diff --git a/tools/ippeveprinter.c b/tools/ippeveprinter.c
+index 147e53e7a..8a916aef4 100644
+--- a/tools/ippeveprinter.c
++++ b/tools/ippeveprinter.c
+@@ -4107,8 +4107,14 @@ ippserver_attr_cb(
+       break;
+   }
+ 
++  fprintf(stderr,__FILE__ ":%d  T:(%d) %s\n",__LINE__,result,attr);
+   return (result != 0);
+ }
++static bool mytcb (ipp_file_t *file, void *cb_data, const char *token)
++{
++  fprintf(stderr,__FILE__ ":%d  T:(%d) %s\n",__LINE__,-1,token);
++
++}
+ 
+ 
+ /*
+@@ -4162,6 +4168,7 @@ load_ippserver_attributes(
+ 
+   ippFileSetAttributes(file, attrs);
+   ippFileSetGroupTag(file, IPP_TAG_PRINTER);
++  fprintf(stderr,__FILE__ ":%d  HERE\n",__LINE__);
+ 
+   if (servername)
+   {
+@@ -4181,7 +4188,13 @@ load_ippserver_attributes(
+   */
+ 
+   ippFileOpen(file, filename, "r");
+-  ippFileRead(file, NULL, false);
++  int rv=ippFileRead(file, mytcb, false);
++  fprintf(stderr,__FILE__ ":%d  THILO (%s)-> %d\n",__LINE__,filename,rv);
++  if ( !rv ) {
++     exit(1);
++  }
++
++
+ 
+  /*
+   * Free memory and return...
+@@ -6482,22 +6495,34 @@ register_printer(
+   */
+ 
+   TXTRecordCreate(&ipp_txt, 1024, NULL);
+-  TXTRecordSetValue(&ipp_txt, "rp", 9, "ipp/print");
+-  if ((value = ippGetString(printer_make_and_model, 0, NULL)) != NULL)
+-    TXTRecordSetValue(&ipp_txt, "ty", (uint8_t)strlen(value), value);
+-  TXTRecordSetValue(&ipp_txt, "adminurl", (uint8_t)strlen(adminurl), adminurl);
+-  if ((value = ippGetString(printer_location, 0, NULL)) != NULL)
+-    TXTRecordSetValue(&ipp_txt, "note", (uint8_t)strlen(value), value);
+-  TXTRecordSetValue(&ipp_txt, "pdl", (uint8_t)strlen(formats), formats);
+-  TXTRecordSetValue(&ipp_txt, "Color", 1, ippGetBoolean(color_supported, 0) ? "T" : "F");
+-  TXTRecordSetValue(&ipp_txt, "Duplex", 1, ippGetCount(sides_supported) > 1 ? "T" : "F");
++  TXTRecordSetValue(&ipp_txt, "TLS", 3, "1.3");
+   if ((value = ippGetString(printer_uuid, 0, NULL)) != NULL)
+     TXTRecordSetValue(&ipp_txt, "UUID", (uint8_t)strlen(value) - 9, value + 9);
+-  TXTRecordSetValue(&ipp_txt, "TLS", 3, "1.3");
++  TXTRecordSetValue(&ipp_txt, "pdl", (uint8_t)strlen(formats), formats);
++
+   if (urf[0])
+     TXTRecordSetValue(&ipp_txt, "URF", (uint8_t)strlen(urf), urf);
+-  TXTRecordSetValue(&ipp_txt, "txtvers", 1, "1");
++  TXTRecordSetValue(&ipp_txt, "Fax", 1, "T");
++  TXTRecordSetValue(&ipp_txt, "Color", 1, ippGetBoolean(color_supported, 0) ? "T" : "F");
++  TXTRecordSetValue(&ipp_txt, "Duplex", 1, ippGetCount(sides_supported) > 1 ? "T" : "F");
++  { char *product="(ThiloPrint)";
++    TXTRecordSetValue(&ipp_txt, "product", (uint8_t)strlen(product), product);
++  }
++  if ((value = ippGetString(printer_location, 0, NULL)) != NULL)
++    TXTRecordSetValue(&ipp_txt, "note", (uint8_t)strlen(value), value);
++ { char *kind="photo,envelope,document";
++    TXTRecordSetValue(&ipp_txt, "kind", (uint8_t)strlen(kind), kind);
++ }
++  TXTRecordSetValue(&ipp_txt, "adminurl", (uint8_t)strlen(adminurl), adminurl);
++  if ((value = ippGetString(printer_make_and_model, 0, NULL)) != NULL)
++    TXTRecordSetValue(&ipp_txt, "ty", (uint8_t)strlen(value), value);
++
++  TXTRecordSetValue(&ipp_txt, "rp", 9, "ipp/print");
++  TXTRecordSetValue(&ipp_txt, "rfo",10,"ipp/faxout");
++
++
+   TXTRecordSetValue(&ipp_txt, "qtotal", 1, "1");
++  TXTRecordSetValue(&ipp_txt, "txtvers", 1, "1");
+ 
+  /*
+   * Register the _printer._tcp (LPD) service type with a port number of 0 to
+diff --git a/tools/test.conf b/tools/test.conf
+index 3499050f3..06877715e 100644
+--- a/tools/test.conf
++++ b/tools/test.conf
+@@ -7,13 +7,18 @@
+ # information.
+ #
+ 
++ATTR keyword printer-location TestLocation
++#ATTR keyword urf-supported W1,CP1,IS1,MT1,PQ3,RS203
++ATTR keyword urf-supported W8,CP255,FN3-11-60,IS9,IFU0,MT1-5,OB10,PQ3-4-5,RS203-300,V1.4
++
+ ATTR boolean color-supported true
+ 
+ ATTR integer copies-default 1
+ ATTR rangeOfInteger copies-supported 1-999
+ 
+ ATTR mimeMediaType document-format-default application/octet-stream
+-ATTR mimeMediaType document-format-supported application/pdf,image/jpeg,image/pwg-raster,image/urf,application/octet-stream
++#ATTR mimeMediaType document-format-supported application/pdf,image/jpeg,image/pwg-raster,image/urf,application/octet-stream
++ATTR mimeMediaType document-format-supported image/urf,image/jpeg
+ 
+ ATTR no-value finishings-col-default
+ ATTR collection finishings-col-database {
+@@ -154,7 +159,7 @@ ATTR keyword print-content-optimize-supported auto,graphic,photo,text,text-and-g
+ ATTR enum print-quality-default 4
+ ATTR enum print-quality-supported 3,4,5
+ 
+-ATTR text printer-make-and-model "Test Printer"
++ATTR text printer-make-and-model TestPrinter
+ 
+ ATTR resolution printer-resolution-default 600dpi
+ ATTR resolution printer-resolution-supported 300dpi,600dpi,1200x600dpi
+diff --git a/xcode/config.h b/xcode/config.h
+index 7d0e1bd56..e95fde4c8 100644
+--- a/xcode/config.h
++++ b/xcode/config.h
+@@ -109,8 +109,8 @@
+  */
+ 
+ #define HAVE_TLS 1
+-#define HAVE_OPENSSL 1
+-/* #undef HAVE_GNUTLS */
++//#define HAVE_OPENSSL 1
++#define HAVE_GNUTLS 1
+ 
+ 
+ /*
+diff --git a/xcode/libcups.xcodeproj/project.pbxproj b/xcode/libcups.xcodeproj/project.pbxproj
+index cfb486093..d5d56f610 100644
+--- a/xcode/libcups.xcodeproj/project.pbxproj
++++ b/xcode/libcups.xcodeproj/project.pbxproj
+@@ -2834,7 +2834,7 @@
+ 			isa = XCBuildConfiguration;
+ 			buildSettings = {
+ 				CLANG_ENABLE_OBJC_WEAK = YES;
+-				CODE_SIGN_IDENTITY = "-";
++				CODE_SIGN_IDENTITY = "Apple Development: Thilo Jeremias (F53Q9HX46K)";
+ 				INSTALL_PATH = /usr/libexec/cups/ippeveprinter;
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 			};
+@@ -2844,7 +2844,7 @@
+ 			isa = XCBuildConfiguration;
+ 			buildSettings = {
+ 				CLANG_ENABLE_OBJC_WEAK = YES;
+-				CODE_SIGN_IDENTITY = "-";
++				CODE_SIGN_IDENTITY = "Apple Development: Thilo Jeremias (F53Q9HX46K)";
+ 				INSTALL_PATH = /usr/libexec/cups/ippeveprinter;
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 			};
+-- 
+2.32.1 (Apple Git-133)
+

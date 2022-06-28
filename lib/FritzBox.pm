@@ -1,4 +1,5 @@
 package FritzBox;
+use Data::Dumper;
 use JSON;
 use HTTP::Request::Common;
 use LWP::UserAgent;
@@ -6,12 +7,15 @@ use Digest::MD5 qw(md5_hex);
 use Encode qw(encode);  
 use IPC::Open2;
 
+open(FBLOG,">","/tmp/faxlog.log");
 
 sub wait_faxready
 {
 	my $self = shift;
 	my $cb = shift;
 	while( my $s=$self->faxstatus() ) {
+		$s->{time} = time();
+		print FBLOG Dumper($s);
 		return $s->{reason} if $s->{status} == 1;
 		my $m="";
 		$m=" $s->{progress}%" if $s->{status} == 4;
