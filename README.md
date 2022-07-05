@@ -29,9 +29,11 @@ Options:
 ### Docker:
 
   The docker-image starts the avahi dameon, but this is untested and will not work on MacOS (see docker-limitations)
-  - make docker-build
-  - make docker-start PASSWORD=SuperPassword USER=TheUserOnFritzBox  TEL=123123123 URL=https://fitz.box
-  - make docker-stop
+```
+   make docker-build
+   make docker-start PASSWORD=SuperPassword USER=TheUserOnFritzBox  TEL=123123123 URL=https://fitz.box
+   make docker-stop
+```
 
 ### MacOS
 
