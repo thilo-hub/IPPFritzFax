@@ -35,13 +35,13 @@ Options:
 
 ### MacOS
 
-  make -j 20 install
-  make start 
+  ```make -j 20 install
+  make start ```
 
 ### FreeBSD
  
-  make -j 20 install
-  make start
+  ```make -j 20 install
+  make start```
 
 - *nix needs a credentials file having the relevant information for the fritzbox available:
 ** $HOME/.credentials  **
