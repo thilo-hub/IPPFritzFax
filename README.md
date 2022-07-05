@@ -21,30 +21,35 @@ It creates an IPP printer device which has a "sub-device" as the fax modem. It w
 
 ## Installation prerequisites:
 
-- A pc having avahi (probable any other dns-sd capable machine will do - not tested)
+- netpbm for URF processing
+- imagemagic & poppler if you need PDF support
 
-- Configure the avahi service usinging the provided service script as a template ( avahi-services/Fax.service  )
+Options:
 
-- Check the configuration ( faxserver/system.conf faxserver/print/faxout.conf faxserver/print/pdf.conf )
-- sh make_all.sh
+### Docker:
 
-- Create the credentials file having the relevant information for the fritzbox available:
+  The docker-image starts the avahi dameon, but this is untested and will not work on MacOS (see docker-limitations)
+  - make docker-build
+  - make docker-start PASSWORD=SuperPassword USER=TheUserOnFritzBox  TEL=123123123 URL=https://fitz.box
+  - make docker-stop
+
+### MacOS
+
+  make -j 20 install
+  make start 
+
+### FreeBSD
+ 
+  make -j 20 install
+  make start
+
+- *nix needs a credentials file having the relevant information for the fritzbox available:
 ** $HOME/.credentials  **
 ```
 url=https://......
 user=.......
 password=.......
 telFrom=.......
-```
-
-
-- Create spool and certificate directories 
- 
-- run:
-
-```
-mkdir spool crt 
-faxserver/bin/ippserver -C faxserver -K crt -d spool --no-dns-sd 
 ```
 
 ==== Thats it ====
@@ -84,11 +89,7 @@ Bonjour/Mdns can be a beast.
 ```
 
 
-
-** Only if the complete mdns info is available, the mac auto installation will be fully working!!! **
-
-
-During setup on MacOS, it might happen that the fax-device does not show as a second printer.  This is usually a mdns problem....
+** Only if the complete mdns info is available, the mac auto printer installation will be fully working!!! **
 
 ### Test FAX reciver
 
@@ -98,7 +99,6 @@ that can be used to receive single pages
 
 0531 - 49059113
 
-./send_fax.pl 000000000  053149059113  ./ippsample/libcups/examples/onepage-letter.pdf
 `./send_fax.pl 000000000  053149059113  ./ippsample/libcups/examples/onepage-letter.pdf`
 
 ###   Fax not sending
@@ -138,6 +138,13 @@ During experimentation, the modem had to power-cycled because it went into a sta
 
 
 
+## Open issues:
+
+ I can only install two printers ( "normal" & "fax" ) - not fax only
+ On IOS I do not see the FAX printer  ( workaround?   filename having the telephone number?? else?? )
+ Not tested with a windows OS
+
+
 ## Design/Implementation
 
   ... TODO...
@@ -145,17 +152,6 @@ During experimentation, the modem had to power-cycled because it went into a sta
 
 ## Automated testing...
   ... TODO ...
-
-
-## Dockerization
-  Docker build works - IPP server connecte (port numbers currently hardcoded)
-  -- Avahi server installed but untested 
-
-  Build: `docker build  -t fritz .`
-  
-  Run: `docker run -ti    -p 8632:8632   --name fax --rm  -d fritz   -url=https://fritz.box  -tel=012345 -user=UUUUU  -pass=XXXXX`
-
-I can currently only test using externzl avahi pointing to my server (macos docker host interface not available)
 
 ## really nice support of all possible iPP features
   ... TODO ...

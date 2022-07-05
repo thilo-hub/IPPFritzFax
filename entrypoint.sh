@@ -18,6 +18,9 @@ for i in "$@"; do
 	;;
  esac
 done >~/.credentials
+dbus-daemon --system
+avahi-daemon -D
+avahi-dnsconfd -D
 
-ippserver -C faxserver  -K /tmp/crt -d /tmp/spool --no-dns-sd
+ippserver -C faxserver -K crt -d spool -r _universal
 

@@ -1,4 +1,9 @@
 
+TEL=1234
+USER=SomeUser
+PASSWORD=aPassword
+URL=https://192.168.66.1
+
 ROOT_DIR!=pwd
 ROOT_DIR?=$(shell pwd)
 
@@ -13,8 +18,17 @@ INST=$(ROOT_DIR)/install
 
 all:install 
 
+docker-build:
+	docker build -t fritz -f Dockerfile .
+
+docker-start:
+	docker run -d -p 8000:8000 --name FritzFax --rm  fritz -pass=${PASSWORD} -tel=${TEL} -user=${USER} -url=${URL}
+
+docker-stop:
+	docker stop FritzFax
+
 clean:
-	rm -rf ippsample urftopgm faxserver/bin/urftopgm faxserver/bin/ippserver
+	rm -rf ippsample urftopgm faxserver/bin/urftopgm faxserver/bin/ippserver faxserver/lib $(INST)
 
 # Start server
 start:
