@@ -19,6 +19,21 @@ It creates an IPP printer device which has a "sub-device" as the fax modem. It w
   "just" select the fax device and provide the phone number in the menu to send...
 
 
+* Install printer
+
+![Install printer](images/install.png)
+
+
+* Select fax
+
+![Select fax](images/print.png)
+
+
+* Print
+
+![Print](images/print2.png)
+
+
 ## Installation prerequisites:
 
 - netpbm for URF processing
