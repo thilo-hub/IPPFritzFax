@@ -39,14 +39,14 @@ Options:
 
 ```
   make -j 20 install
-  make start 
+  make runserver 
 ```
 
 ### FreeBSD
  
 ```
   make -j 20 install
-  make start
+  make runserver
 ```
 
 - *nix needs a credentials file having the relevant information for the fritzbox available:
@@ -97,7 +97,7 @@ Bonjour/Mdns can be a beast.
 
 ** Only if the complete mdns info is available, the mac auto printer installation will be fully working!!! **
 
-### Test FAX reciver
+### Test FAX sending
 
 There is a free receiver (at least in Germany)
 https://simple-fax.de/test-fax-empfangen
@@ -105,38 +105,21 @@ that can be used to receive single pages
 
 0531 - 49059113
 
-`./send_fax.pl 000000000  053149059113  ./ippsample/libcups/examples/onepage-letter.pdf`
+`perl bin/send_fax.pl 000000000  053149059113  faxserver/faxout/faxout.png'
 
-###   Fax not sending
-
-
-To test the "fax-ing" from commandline, try:
-
-`./send_fax.pl 012345674 012345670 some-small-pdfile.pdf`  
 ```
-url=https://192.168.66.1
-sid=21fcd4e49c530cad
-Sending 1 pages to 012345670
+...
+Sending 1 pages to 053149059113
 FRITZ!Box
 ***** FRITZ!Box Fax senden *****
 Der Faxversand wurde erfolgreich gestartet.
 Sie werden weitergeleitet. Bitte einen Moment Geduld.
-ATTR: job-impressions=0 job-impressions-completed=0
-STATE: Waiting (FAXSEND_CONNECTING)
-ATTR: job-impressions=0 job-impressions-completed=0
-STATE: Waiting (FAXSEND_CONNECTING)
-ATTR: job-impressions=0 job-impressions-completed=0
-STATE: Waiting (FAXSEND_CONNECTED) 42%
-ATTR: job-impressions=0 job-impressions-completed=0
-STATE: Waiting (FAXSEND_CONNECTED) 42%
-....
-ATTR: job-impressions=1 job-impressions-completed=1
-STATE: Waiting (FAXSEND_CONNECTED) 100%
-ATTR: job-impressions=1 job-impressions-completed=1
-STATE: Waiting (FAXSEND_REPORT)
-ATTR: job-impressions=1 job-impressions-completed=1
+[Unknown INPUT type] [Unknown INPUT type] [Unknown INPUT type]
+...
+ATTR: job-impressions=2 job-impressions-completed=2
 STATE: Waiting (FAXSEND_REPORT)
 ```
+You should receive an e-mail from the FritzBox about the fax operation (if you have set this up correctly)
 
 I have tested the script using a FritzBox6591 , there is a chance it works differently on other boxes.
 Weird enough the fax-data is being sent to `{url}/cgi-bin/firmwarecfg`,  I don't think that's good design - but who am I...
@@ -147,7 +130,9 @@ During experimentation, the modem had to power-cycled because it went into a sta
 ## Open issues:
 
  I can only install two printers ( "normal" & "fax" ) - not fax only
- On IOS I do not see the FAX printer  ( workaround?   filename having the telephone number?? else?? )
+ 
+ On IOS/IpadOS I do not see the FAX printer only the "Normal" printer  ( What is missing here??? )
+ 
  Not tested with a windows OS
 
 
