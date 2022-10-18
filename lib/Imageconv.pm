@@ -140,6 +140,9 @@ my $pageHeader = pack("CCCCCCvv", 254, 0x10,  1, 0,0,0,1728, 0);
 
 # convert a g3 formated list of pages
 # into a single sfff formatted file
+# See https://netpbm.sourceforge.net/doc/faxformat.html 
+# https://faxauthority.com/glossary/group-4-compression/
+# 
 sub g3toSfff
 {
 	# Document header
@@ -147,31 +150,38 @@ sub g3toSfff
 	my $out=$documentHeader;
 	# my $ctr="001";
 	my $first_page=1;
+	# See: http://delphi.pjh2.de/articles/graphic/sff_format.php  for details
 	foreach(@_) {
+		# The Sfff header ned
 		my $last_page = scalar(@_)==1 ? 1 : 0;
+		#make Document header
 		my $pinfo = pack("VV",$first_page,$last_page);
 		$first_page = 0;
-		# open(DEBUG,">bad.$ctr.g3"); print DEBUG $_; close(DEBUG); $ctr++;
-		#
-		#
-		#		$out .=  pack( "H*", "fe1001000000c00600000100000000000000");
+		# Add static documentheader and dynamic end of page info
 		$out .= $pageHeader.$pinfo;
+
+		#Take each line and convert into an ascii-binary 
 		my $in = unpack( "b*", $_ );
+		#Drop leading EOL marker which might have more zeros essentialy find the start bit
 		$in =~ s/^0+1//;
+		# itterate for each line ( EOL token ) ( it is maybe just easier to modify ascii than binary in perl )
 		foreach ( split( /000000000001/, $in ) ) {
+		    # Convert ascii back to binary
 		    $o = pack( "b*", $_ );
 		    $l = length($o);
+		    # Extract length bytes and append the page-content to $out
+		    # https://faxauthority.com/glossary/group-4-compression/
+		    # 
 		    $l =
 		      ( $l > 216 )
 		      ? pack( "CvA*", 0, $l, $o )
 		      : pack( "CA*", $l, $o );
-		    $oh = unpack( "H*", $o );
 		    $out .=  $l;
 		}
 	};
+	# and Document trailer
 	$out .=  $documentTrailer;
 
-	# open(DEBUG,">bad.sff"); print DEBUG $out; close(DEBUG); exit 0;
 	return $out;
 }
 1;
